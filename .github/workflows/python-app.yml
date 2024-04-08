@@ -1,0 +1,47 @@
+from hikkatl.types import Message
+from .. import loader
+from .. import utils
+@loader.tds
+class DeleteWordModule(loader.Module):
+    """Модуль для удаления заданных слов"""
+    strings = {"name": "DeleteWordModule"}
+    
+    words_to_delete = set()
+    users_to_delete = set()
+    delete_enabled = False
+    
+    @loader.command()
+    async def sld(self, message: Message):
+        """Добавить слово для удаленияh"""
+        args = utils.get_args_raw(message).strip()
+        self.words_to_delete.add(args)
+        await utils.answer(message, f"Слово '{args}' добавлено для удаления")
+        
+    @loader.command()
+    async def slus(self, message: Message):
+        """Добавить пользователя для удаления слов"""
+        args = utils.get_args_raw(message).strip()
+        if args.isdigit():
+        user_id = int(args)
+        self.users_to_delete.add(user_id)
+        await utils.answer(message, f"Пользователь с ID {user_id} добавлен для удаления слов")
+        else:
+        await utils.answer(message, "Неверный формат ID пользователя. Пожалуйста, введите корректный числовой ID.")
+    
+    @loader.command()
+    async def slon(self, message: Message):
+        """Включить удаление слов"""
+        self.delete_enabled = True
+        await utils.answer(message, "Удаление слов включено")
+    
+    @loader.command()
+    async def sloff(self, message: Message):
+        """Отключить удаление слов"""
+        self.delete_enabled = False
+        await utils.answer(message, "Удаление слов выключено")
+    
+    async def normal_message(self, message: Message):
+        if message.sender_id in self.users_to_delete and self.delete_enabled:
+            text = utils.get_args_raw(message).lower()
+            if text in self.words_to_delete:
+                await message.delete()
